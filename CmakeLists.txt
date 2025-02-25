@@ -1,0 +1,22 @@
+cmake_minimum_required(VERSION 3.10)
+project(Projet_Visualisation_Biomedicale)
+
+set(CMAKE_CXX_STANDARD 17)
+
+find_package(OpenGL REQUIRED)
+
+# Ajout de GLAD
+include_directories(libs/glad/include)
+add_library(glad STATIC libs/glad/src/glad.c)
+
+# Ajout de GLFW (si utilisé)
+add_subdirectory(libs/glfw)
+
+include_directories(
+    libs/glfw/include
+    libs/glm
+)
+
+add_executable(main src/main.cpp src/renderer.cpp src/camera.cpp src/shaders.cpp)
+
+target_link_libraries(main OpenGL::GL glad glfw)
