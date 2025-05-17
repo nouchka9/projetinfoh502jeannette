@@ -1,0 +1,81 @@
+cmake_minimum_required(VERSION 3.10)
+project(MyProject)
+
+# Définir le standard C++
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_EXTENSIONS OFF) # Disable compiler-specific extensions
+
+# Platform-specific configurations
+if(APPLE)
+    set(CMAKE_OSX_ARCHITECTURES "x86_64") # macOS x64
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15") # Minimum macOS version
+endif()
+
+# Trouver OpenGL
+find_package(OpenGL REQUIRED)
+
+# Ajouter GLFW comme sous-module
+add_subdirectory(libs/glfw)
+include_directories(libs/glfw/include)
+
+# Ajouter GLAD
+add_library(glad STATIC libs/glad/src/glad.c)
+target_include_directories(glad PUBLIC libs/glad/include)
+
+# Ajouter Assimp comme sous-module
+add_subdirectory(libs/assimp)
+include_directories(libs/assimp/include)
+
+# Ajouter GLM (pas besoin de compilation, c'est une bibliothèque header-only)
+include_directories(libs/glm)
+
+# Ajouter ImGui
+set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/3rdParty/imgui)
+set(IMGUI_SOURCES
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/imgui_impl_opengl3.cpp
+)
+include_directories(${IMGUI_DIR})
+
+# Inclure les fichiers d'en-tête de ton projet
+include_directories(src)
+
+# Ajouter les fichiers sources de ton projet
+add_executable(main
+    src/main.cpp
+    src/camera.cpp
+    src/shaders.cpp
+    src/Mesh.cpp
+    src/Model.cpp
+    src/stb_image.cpp
+    src/Skybox.cpp
+    src/BufferManager.cpp
+    src/Annotation.cpp
+    src/Layer.cpp
+    src/ParticleSystem.cpp
+    src/Vertex.cpp
+    ${IMGUI_SOURCES}
+)
+
+# Lier les bibliothèques à l'exécutable
+target_link_libraries(main PRIVATE
+    OpenGL::GL
+    glad
+    glfw
+    assimp
+)
+
+# Linker la bibliothèque filesystem si nécessaire (souvent requis pour Clang < 15, mais vérifions)
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # AppleClang 17.0.0 devrait inclure std::filesystem par défaut avec C++17,
+    # mais ajoutons ceci pour garantir la compatibilité
+    target_link_libraries(main PRIVATE c++fs)
+endif()
+
+# Copier le dossier shaders dans le répertoire de build
+file(COPY shaders DESTINATION ${CMAKE_BINARY_DIR})
